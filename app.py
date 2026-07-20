@@ -7,21 +7,24 @@ from streamlit_cropper import st_cropper
 # Load Model
 model = load_model("face-mask-detector.keras")
 
+# Title
 st.title("Face Mask Detection Project")
 
-# Select Input Type
+# Select Input
 option = st.selectbox("Select Input", ["Image", "Capture"])
 
 uploaded_file = None
 camera_image = None
 cropped_img = None
 
+# ---------------- Upload Image ----------------
 if option == "Image":
     uploaded_file = st.file_uploader(
         "Upload Image",
         type=["jpg", "jpeg", "png"]
     )
 
+# ---------------- Camera ----------------
 else:
     camera_image = st.camera_input("Capture Image")
 
@@ -34,12 +37,12 @@ else:
             image,
             realtime_update=True,
             box_color="red",
-            aspect_ratio=(1,1)
+            aspect_ratio=(1, 1)
         )
 
-        st.image(cropped_img, caption="Cropped Image")
+        st.image(cropped_img, caption="Cropped Image", width=300)
 
-# Detect Button
+# ---------------- Detect ----------------
 if st.button("Detect"):
 
     image_to_detect = None
@@ -55,19 +58,28 @@ if st.button("Detect"):
 
     if image_to_detect is not None:
 
-        image_to_detect = image_to_detect.convert("RGB")
-        image_to_detect = image_to_detect.resize((150,150))
+        # Show Uploaded Image
+        st.image(
+            image_to_detect,
+            caption="Uploaded Image",
+            width=350
+        )
 
-        img_array = np.array(image_to_detect).astype("float32") / 255.0
+        # Preprocess Image
+        img = image_to_detect.convert("RGB")
+        img = img.resize((150, 150))
+
+        img_array = np.array(img, dtype=np.float32) / 255.0
         img_array = np.expand_dims(img_array, axis=0)
 
+        # Prediction
         prediction = model.predict(img_array, verbose=0)
 
         score = float(prediction[0][0])
 
-        st.write("Prediction Score:", round(score,4))
+        st.write(f"### Prediction Score : {score:.4f}")
 
-        # ===== Prediction =====
+        # Result
         if score <= 0.5:
             st.success("Person is WITH MASK")
         else:
